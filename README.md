@@ -10,7 +10,11 @@ Streamlit version — runs as a proper website in your browser
 How it works in one line:
 
 Your input → converted to lowercase → checked against keyword list → matching reply is shown
+
 To open the Streamlit website chatbot:
+
 python -m streamlit run app.py
+
 To open the terminal chatbot:
+
 python chatbot.py
