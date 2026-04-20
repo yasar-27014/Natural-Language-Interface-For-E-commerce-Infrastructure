@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ShopEase Chatbot</title>
+  <style>
+
+    /* =============================================
+       BASIC PAGE SETUP
+       * = apply to everything on the page
+    ============================================= */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background-color: #f0f2f5;
+      display: flex;
+      justify-content: center;  /* center left-right */
+      align-items: center;      /* center top-bottom */
+      height: 100vh;            /* 100% of screen height */
+    }
+
+    /* =============================================
+       THE CHAT WINDOW (the white box)
+    ============================================= */
+    .chat-window {
+      width: 420px;
+      height: 620px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+      display: flex;
+      flex-direction: column;   /* stack children top to bottom */
+      overflow: hidden;
+    }
+
+    /* =============================================
+       TOP BAR (green header)
+    ============================================= */
+    .chat-header {
+      background: #075e54;      /* WhatsApp-style dark green */
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* The round avatar circle */
+    .avatar {
+      width: 42px;
+      height: 42px;
+      background: #25d366;
+      border-radius: 50%;       /* makes it a circle */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .chat-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .chat-header p {
+      font-size: 12px;
+      opacity: 0.8;
+      color: #25d366;
+    }
+
+    /* =============================================
+       QUICK COMMAND BUTTONS (below the header)
+    ============================================= */
+    .quick-buttons {
+      background: #f8f9fa;
+      padding: 10px 14px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;          /* wrap to next line if too many */
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .quick-btn {
+      background: white;
+      border: 1px solid #075e54;
+      color: #075e54;
+      padding: 5px 12px;
+      border-radius: 20px;      /* pill shape */
+      font-size: 12px;
+      cursor: pointer;          /* hand cursor on hover */
+      transition: all 0.2s;     /* smooth animation */
+    }
+
+    .quick-btn:hover {
+      background: #075e54;
+      color: white;
+    }
+
+    /* =============================================
+       MESSAGE AREA (scrollable middle section)
+    ============================================= */
+    .chat-messages {
+      flex: 1;                  /* takes up all remaining space */
+      overflow-y: auto;         /* scroll when messages overflow */
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #e5ddd5;      /* WhatsApp beige background */
+    }
+
+    /* =============================================
+       INDIVIDUAL MESSAGE BUBBLES
+    ============================================= */
+
+    /* wrapper div for each message */
+    .message {
+      display: flex;
+      flex-direction: column;
+      max-width: 80%;           /* bubble never wider than 80% */
+    }
+
+    /* USER messages go to the RIGHT */
+    .message.user {
+      align-self: flex-end;     /* push to right side */
+    }
+
+    /* BOT messages go to the LEFT */
+    .message.bot {
+      align-self: flex-start;   /* push to left side */
+    }
+
+    /* The actual bubble */
+    .bubble {
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+      white-space: pre-wrap;    /* respects \n line breaks */
+    }
+
+    /* User bubble = green */
+    .message.user .bubble {
+      background: #dcf8c6;
+      border-bottom-right-radius: 2px;
+    }
+
+    /* Bot bubble = white */
+    .message.bot .bubble {
+      background: white;
+      border-bottom-left-radius: 2px;
+    }
+
+    /* Small timestamp under each bubble */
+    .timestamp {
+      font-size: 11px;
+      color: #888;
+      margin-top: 3px;
+      padding: 0 4px;
+    }
+
+    .message.user .timestamp {
+      text-align: right;
+    }
+
+    /* =============================================
+       TYPING INDICATOR (the "..." animation)
+    ============================================= */
+    .typing {
+      display: flex;
+      gap: 4px;
+      padding: 12px 14px;
+      background: white;
+      border-radius: 12px;
+      width: fit-content;
+      border-bottom-left-radius: 2px;
+    }
+
+    .typing span {
+      width: 8px;
+      height: 8px;
+      background: #aaa;
+      border-radius: 50%;
+      animation: bounce 1s infinite;
+    }
+
+    /* each dot bounces at a different time */
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30%           { transform: translateY(-6px); }
+    }
+
+    /* =============================================
+       BOTTOM INPUT BAR
+    ============================================= */
+    .chat-input {
+      padding: 12px 14px;
+      background: #f0f2f5;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 24px;
+      background: white;
+      font-size: 14px;
+      outline: none;
+    }
+
+    /* Send button */
+    .send-btn {
+      width: 42px;
+      height: 42px;
+      background: #075e54;
+      border: none;
+      border-radius: 50%;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .send-btn:hover {
+      background: #128c7e;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- =============================================
+       HTML STRUCTURE — the chat window
+  ============================================= -->
+  <div class="chat-window">
+
+    <!-- Top green header bar -->
+    <div class="chat-header">
+      <div class="avatar">🛒</div>
+      <div>
+        <h2>ShopEase Assistant</h2>
+        <p>● Online — Always here to help</p>
+      </div>
+    </div>
+
+    <!-- Quick command buttons -->
+    <div class="quick-buttons">
+      <button class="quick-btn" onclick="sendQuick('order status')">Order Status</button>
+      <button class="quick-btn" onclick="sendQuick('payment options')">Payment</button>
+      <button class="quick-btn" onclick="sendQuick('offers')">Offers</button>
+      <button class="quick-btn" onclick="sendQuick('shipping')">Shipping</button>
+      <button class="quick-btn" onclick="sendQuick('support')">Support</button>
+    </div>
+
+    <!-- Messages appear here -->
+    <div class="chat-messages" id="chatMessages">
+    </div>
+
+    <!-- Input box at the bottom -->
+    <div class="chat-input">
+      <input
+        type="text"
+        id="userInput"
+        placeholder="Type a message..."
+        onkeypress="handleKeyPress(event)"
+      />
+      <button class="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+
+  </div>
+
+
+  <script>
+
+    // =============================================
+    // THE RESPONSES DATABASE
+    // Same logic as your Python responses.py!
+    // =============================================
+    const RESPONSES = [
+      {
+        keywords: ["order status", "track order", "show status", "where is my order"],
+        response: "ORDER STATUS\n\nYour order #ORD-20481 is: OUT FOR DELIVERY\nEstimated delivery: Today by 8:00 PM\nTracking ID: DL-77492-IN"
+      },
+      {
+        keywords: ["cancel", "cancel order", "stop order"],
+        response: "CANCEL ORDER\n\nYou can cancel within 24 hours of placing.\nSteps:\n1. Go to My Orders\n2. Select your order\n3. Click Cancel Order"
+      },
+      {
+        keywords: ["return", "refund", "money back", "exchange"],
+        response: "RETURNS & REFUNDS\n\nReturn window: 7 days from delivery\nRefund time: 5-7 business days\nEmail: returns@shopease.in"
+      },
+      {
+        keywords: ["payment", "pay", "upi", "credit card", "cod", "emi"],
+        response: "PAYMENT OPTIONS\n\n✓ UPI (Google Pay, PhonePe, Paytm)\n✓ Credit / Debit Cards\n✓ Cash on Delivery (under Rs.5000)\n✓ EMI on select cards"
+      },
+      {
+        keywords: ["shipping", "delivery", "how long", "when will"],
+        response: "SHIPPING INFO\n\nStandard: 3-5 days (FREE above Rs.499)\nExpress: 1-2 days (Rs.99 extra)\nSame Day: Metro cities only (Rs.149)"
+      },
+      {
+        keywords: ["offer", "discount", "coupon", "deal", "sale", "promo"],
+        response: "CURRENT OFFERS\n\nWELCOME20 → 20% off your first order\nFLASH50   → Rs.50 off above Rs.500\nUPIBACK10 → 10% cashback on UPI"
+      },
+      {
+        keywords: ["support", "contact", "help", "call", "complaint"],
+        response: "CUSTOMER SUPPORT\n\nPhone: 1800-123-4567 (9AM-9PM, Free)\nEmail: support@shopease.in\nChat: shopease.in/chat (24/7)"
+      },
+      {
+        keywords: ["hello", "hi", "hey", "good morning", "good evening"],
+        response: "Hello! Welcome to ShopEase! 👋\n\nHow can I help you today?\nYou can ask me about orders, payments, offers, shipping, and more!"
+      },
+    ];
+
+    const FALLBACK = "Sorry, I didn't understand that. 🤔\n\nTry asking about:\n• Order status\n• Payment options\n• Shipping info\n• Current offers\n• Customer support";
+
+    // =============================================
+    // GET RESPONSE — same as Python's get_response()
+    // =============================================
+    function getResponse(userInput) {
+      // normalize = make lowercase, remove extra spaces
+      const normalized = userInput.toLowerCase().trim();
+
+      // loop through each response entry
+      for (const entry of RESPONSES) {
+        // loop through each keyword
+        for (const keyword of entry.keywords) {
+          // check if keyword exists inside what user typed
+          if (normalized.includes(keyword)) {
+            return entry.response;   // match found!
+          }
+        }
+      }
+      return FALLBACK;  // no match found
+    }
+
+    // =============================================
+    // GET CURRENT TIME (for timestamps)
+    // =============================================
+    function getTime() {
+      const now = new Date();
+      let h = now.getHours();
+      let m = now.getMinutes();
+      const ampm = h >= 12 ? "PM" : "AM";
+      h = h % 12 || 12;
+      m = m < 10 ? "0" + m : m;
+      return h + ":" + m + " " + ampm;
+    }
+
+    // =============================================
+    // ADD A MESSAGE BUBBLE TO THE SCREEN
+    // =============================================
+    function addMessage(text, sender) {
+      const chatBox = document.getElementById("chatMessages");
+
+      // create a new div for this message
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "message " + sender;  // "message user" or "message bot"
+
+      // create the bubble
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = text;  // put the text inside
+
+      // create the timestamp
+      const time = document.createElement("div");
+      time.className = "timestamp";
+      time.textContent = getTime();
+
+      // put bubble and time inside the message div
+      msgDiv.appendChild(bubble);
+      msgDiv.appendChild(time);
+
+      // put the message div into the chat box
+      chatBox.appendChild(msgDiv);
+
+      // auto-scroll to the bottom
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // =============================================
+    // SHOW THE "..." TYPING ANIMATION
+    // =============================================
+    function showTyping() {
+      const chatBox = document.getElementById("chatMessages");
+
+      const typingDiv = document.createElement("div");
+      typingDiv.className = "message bot";
+      typingDiv.id = "typingIndicator";
+
+      typingDiv.innerHTML = `
+        <div class="typing">
+          <span></span><span></span><span></span>
+        </div>
+      `;
+
+      chatBox.appendChild(typingDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // =============================================
+    // REMOVE THE TYPING ANIMATION
+    // =============================================
+    function hideTyping() {
+      const el = document.getElementById("typingIndicator");
+      if (el) el.remove();
+    }
+
+    // =============================================
+    // MAIN FUNCTION — runs when user sends a message
+    // =============================================
+    function sendMessage() {
+      const inputBox = document.getElementById("userInput");
+      const userText = inputBox.value.trim();
+
+      // if empty, do nothing
+      if (!userText) return;
+
+      // show the user's message on the right
+      addMessage(userText, "user");
+
+      // clear the input box
+      inputBox.value = "";
+
+      // show "..." while bot is "thinking"
+      showTyping();
+
+      // wait 800ms then show bot reply (feels natural)
+      setTimeout(function() {
+        hideTyping();
+        const reply = getResponse(userText);
+        addMessage(reply, "bot");
+      }, 800);
+    }
+
+    // =============================================
+    // HANDLE ENTER KEY — same as clicking Send
+    // =============================================
+    function handleKeyPress(event) {
+      if (event.key === "Enter") {
+        sendMessage();
+      }
+    }
+
+    // =============================================
+    // QUICK BUTTONS — when you click Order Status etc
+    // =============================================
+    function sendQuick(text) {
+      document.getElementById("userInput").value = text;
+      sendMessage();
+    }
+
+    // =============================================
+    // WELCOME MESSAGE — shown when page loads
+    // =============================================
+    window.onload = function() {
+      setTimeout(function() {
+        addMessage("Hi there! 👋 Welcome to ShopEase!\n\nI can help you with orders, payments, shipping, offers, and more.\n\nWhat can I help you with today?", "bot");
+      }, 500);
+    };
+
+  </script>
+
+</body>
+</html>
